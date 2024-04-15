@@ -1,6 +1,8 @@
 name: buildfork
 on:
-  workflow_dispatch:
+  push:
+    branches:
+    - main
 
 jobs:
   build:
@@ -24,8 +26,23 @@ jobs:
     - name: build
       run: npm run build
     - name: Upload build files
-      uses: actions/upload-artifact@v3.1.0
+      uses: actions/upload-artifact@v4.3.1
       with:
         name: build
         path: build
-        
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: production
+      url: http://wiry-slope.surge.sh
+    steps:
+    - name: Download the Build Artifact
+      uses: actions/download-artifact@v4.1.4
+      with:
+        name: build      
+    - name: deploy to surge
+      run: npx surge --project '.' --domain wiry-slope.surge.sh
+      env:
+        SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
+        SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
